@@ -138,27 +138,38 @@ fichier_uploade = st.sidebar.file_uploader(t["upload"], type=["txt", "csv"])
 
 @st.cache_data
 def charger_donnees(fichier):
-    # Logique pour différencier CSV et TXT / Logic to differentiate CSV and TXT
-    if fichier.name.endswith('.csv'):
-        try:
-            # Essayer virgule en premier / Try comma first
-            df_temp = pd.read_csv(fichier, sep=',')
-            # Si le dataframe n'a qu'une colonne, essayer le point-virgule / Try semicolon if only 1 col
-            if len(df_temp.columns) == 1:
-                fichier.seek(0)
-                df_temp = pd.read_csv(fichier, sep=';')
+    # Lecture du contenu brut
+    content = fichier.read()
+    
+    # Stratégie intelligente de détection du séparateur
+    try:
+        # Essayer d'abord la tabulation (format standard LMT)
+        df_temp = pd.read_csv(io.BytesIO(content), sep='\t')
+        if 'genotype' in df_temp.columns and len(df_temp.columns) > 5:
             return df_temp
-        except Exception:
-            fichier.seek(0)
-            return pd.read_csv(fichier)
-    else:
-        # Fichiers TXT natifs exportés de LMT (tabulation) / Native LMT TXT files (tab)
-        return pd.read_csv(fichier, sep='\t')
+            
+        # Si ça échoue, essayer la virgule
+        df_temp = pd.read_csv(io.BytesIO(content), sep=',')
+        if 'genotype' in df_temp.columns and len(df_temp.columns) > 5:
+            return df_temp
+            
+        # Si ça échoue, essayer le point-virgule (format français Excel)
+        df_temp = pd.read_csv(io.BytesIO(content), sep=';')
+        if 'genotype' in df_temp.columns and len(df_temp.columns) > 5:
+            return df_temp
+            
+        # Fallback générique
+        return pd.read_csv(io.BytesIO(content))
+        
+    except Exception as e:
+        st.error(f"Erreur de lecture du fichier : {e}")
+        return None
 
 df_raw = None
 if fichier_uploade is not None:
     df_raw = charger_donnees(fichier_uploade)
-    st.sidebar.success(t["load_ok"])
+    if df_raw is not None:
+        st.sidebar.success(t["load_ok"])
 else:
     st.sidebar.warning(t["wait_file"])
 
@@ -169,10 +180,15 @@ if df_raw is not None:
     separateur = st.sidebar.text_input(t["sep"], "_")
     
     try:
-        df['Sex'] = df['genotype'].str.split(separateur).str[0]
-        df['Treatment'] = df['genotype'].str.split(separateur).str[1]
+        if 'genotype' in df.columns:
+            df['Sex'] = df['genotype'].str.split(separateur).str[0]
+            df['Treatment'] = df['genotype'].str.split(separateur).str[1]
+        else:
+            st.sidebar.error("La colonne 'genotype' est introuvable. Veuillez vérifier votre fichier de données.")
+            st.stop()
     except Exception as e:
         st.sidebar.error(f"{t['err_parse']}: {e}")
+        st.stop()
 
     groupes_detectes = sorted(df['Treatment'].dropna().unique().tolist())
     sexes_detectes = sorted(df['Sex'].dropna().unique().tolist())
