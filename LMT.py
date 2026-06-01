@@ -11,14 +11,14 @@ import warnings
 
 warnings.filterwarnings('ignore')
 
-# Configuration de la page de la GUI Streamlit
+# Configuration de la page / Page configuration
 st.set_page_config(
-    page_title="LMT Phenotype Analytics - Manzoni Lab",
+    page_title="LMT Phenotype Analytics",
     page_icon="🧠",
     layout="wide"
 )
 
-# Style CSS personnalisé pour l'interface scientifique
+# Style CSS / CSS Styling
 st.markdown("""
     <style>
     .reportview-container { background: #f0f2f6; }
@@ -28,79 +28,171 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-st.title("🧠 LMT Phenotype Analytics : Pipeline de Plasticité Comportementale")
-st.write("Conçu pour le **Manzoni Lab** — Interface Graphique d'Analyse des Trajectoires du Live Mouse Tracker.")
-
 # ==============================================================================
-# RATIONNELS TEXTUELS (Intégrés de manière ergonomique dans la GUI)
+# DICTIONNAIRE DE TRADUCTION / TRANSLATION DICTIONARY
 # ==============================================================================
-with st.expander("📖 Afficher le Rationnel Mathématique & l'Architecture des Domaines", expanded=False):
-    st.markdown("""
-    ### 1. Logique Mathématique et Statistique
-    * **Résidualisation Hiérarchique (LMM) :** Corrige le biais de pseudo-réplication en prenant la portée (`group`) comme intercept aléatoire, isolant l'effet pharmacologique ou génétique pur.
-    * **Z-Score Ancré sur la Nouveauté :** Normalisation calée exclusivement sur la première heure d'exploration du groupe témoin ($Z=0$), transformant la cinétique en une trajectoire d'habituation lisible.
-    * **Tests de Welch Point-par-Point :** Gère l'hétéroscédasticité induite par les traitements sans assumer l'égalité des variances.
+lang = st.sidebar.radio("🌐 Language / Langue", ["Français", "English"])
 
-    ### 2. Architecture des 5 Domaines Composites
-    * **Locomotor Drive :** `MoveisolatedTotalLen + totalDistance` (Activité cinétique pure)
-    * **Exploratory Spatial Strategy :** `Center_Periphery_Ratio + RearisolatedTotalLen` (Cartographie cognitive 3D)
-    * **Vigilance / Risk Assessment :** `SAPNb + StopisolatedNb` (Marqueurs d'anxiété aiguë)
-    * **Social Tolerance :** `Group2TotalLen + Group3TotalLen + SidebysideContactTotalLen` (Proximité passive)
-    * **Active Social Engagement :** `Oral-oral + Oral-genital + Socialapproach + Train2 + FollowZone` (Interaction dirigée)
-    """)
+text = {
+    "Français": {
+        "title": "🧠 LMT Phenotype Analytics : Pipeline de Plasticité Comportementale",
+        "subtitle": "Interface Graphique d'Analyse des Trajectoires du Live Mouse Tracker.",
+        "rationale_exp": "📖 Afficher le Rationnel Mathématique & l'Architecture des Domaines",
+        "rationale_md": """
+### 1. Logique Mathématique et Statistique
+* **Résidualisation Hiérarchique (LMM) :** Corrige le biais de pseudo-réplication (variance maternelle).
+* **Z-Score Ancré sur la Nouveauté :** Normalisation calée sur le groupe témoin ($Z=0$).
+* **Tests de Welch Point-par-Point :** Gère l'hétéroscédasticité sans assumer l'égalité des variances.
+
+### 2. Architecture des 5 Domaines Composites
+* **Locomotor Drive :** `MoveisolatedTotalLen + totalDistance`
+* **Exploratory Spatial Strategy :** `Center_Periphery_Ratio + RearisolatedTotalLen`
+* **Vigilance / Risk Assessment :** `SAPNb + StopisolatedNb`
+* **Social Tolerance :** `Group2TotalLen + Group3TotalLen + SidebysideContactTotalLen`
+* **Active Social Engagement :** `Oral-oral + Oral-genital + Socialapproach + Train2 + FollowZone`
+        """,
+        "import_h": "📁 Importation des Données",
+        "upload": "Glissez un fichier (.txt ou .csv) ici",
+        "load_ok": "Données chargées avec succès !",
+        "wait_file": "En attente d'un fichier .txt ou .csv.",
+        "param_h": "⚙️ Paramètres du Génotype",
+        "sep": "Séparateur de la colonne 'genotype'",
+        "err_parse": "Erreur de parsing de la colonne 'genotype'",
+        "group_h": "🔬 Sélection des Groupes",
+        "ctrl": "Groupe CONTRÔLE (Référence Z=0)",
+        "target": "Groupe TRAITÉ / MUTANT",
+        "phase": "Chronologie des phases (Axe X)",
+        "plot_h": "🎨 Personnalisation des Figures",
+        "w": "Largeur de la figure",
+        "h": "Hauteur de la figure",
+        "star": "Taille des étoiles / p-values",
+        "color": "Couleur du groupe traité",
+        "zoom": "Activer le zoom manuel de l'axe Y",
+        "run": "🚀 Lancer l'Analyse Computationnelle",
+        "running": "Exécution du pipeline statistique en cours...",
+        "res_h": "📊 Trajectoires Phénotypiques Longitudinales",
+        "ylab": "Adjusted Z-Score\n(Litter-Corrected)",
+        "exp_h": "💾 Exportation des Résultats",
+        "dl_fig": "🖼️ Télécharger la Figure (Qualité Publication)",
+        "dl_csv": "📊 Télécharger les Données Calculées (CSV)",
+        "exp_ok": "Analyses prêtes pour exportation !"
+    },
+    "English": {
+        "title": "🧠 LMT Phenotype Analytics: Behavioral Plasticity Pipeline",
+        "subtitle": "Graphical Interface for Live Mouse Tracker Trajectory Analysis.",
+        "rationale_exp": "📖 Show Mathematical Rationale & Domain Architecture",
+        "rationale_md": """
+### 1. Mathematical and Statistical Logic
+* **Hierarchical Residualization (LMM):** Corrects pseudo-replication bias (maternal variance).
+* **Novelty-Anchored Z-Score:** Normalization anchored to the control group ($Z=0$).
+* **Point-by-Point Welch's Tests:** Handles heteroscedasticity without assuming equal variances.
+
+### 2. 5-Domain Composite Architecture
+* **Locomotor Drive:** `MoveisolatedTotalLen + totalDistance`
+* **Exploratory Spatial Strategy:** `Center_Periphery_Ratio + RearisolatedTotalLen`
+* **Vigilance / Risk Assessment:** `SAPNb + StopisolatedNb`
+* **Social Tolerance:** `Group2TotalLen + Group3TotalLen + SidebysideContactTotalLen`
+* **Active Social Engagement:** `Oral-oral + Oral-genital + Socialapproach + Train2 + FollowZone`
+        """,
+        "import_h": "📁 Data Import",
+        "upload": "Drop a data file (.txt or .csv) here",
+        "load_ok": "Data successfully loaded!",
+        "wait_file": "Waiting for a .txt or .csv file.",
+        "param_h": "⚙️ Genotype Parameters",
+        "sep": "Separator for 'genotype' column",
+        "err_parse": "Error parsing 'genotype' column",
+        "group_h": "🔬 Group Selection",
+        "ctrl": "CONTROL Group (Reference Z=0)",
+        "target": "TREATED / MUTANT Group",
+        "phase": "Chronology of phases (X-Axis)",
+        "plot_h": "🎨 Figure Customization",
+        "w": "Figure width",
+        "h": "Figure height",
+        "star": "Star / p-values size",
+        "color": "Treated group color",
+        "zoom": "Enable manual Y-axis zoom",
+        "run": "🚀 Run Computational Analysis",
+        "running": "Executing statistical pipeline...",
+        "res_h": "📊 Longitudinal Phenotypic Trajectories",
+        "ylab": "Adjusted Z-Score\n(Litter-Corrected)",
+        "exp_h": "💾 Export Results",
+        "dl_fig": "🖼️ Download Figure (Publication Quality)",
+        "dl_csv": "📊 Download Calculated Data (CSV)",
+        "exp_ok": "Analyses ready for export!"
+    }
+}
+
+t = text[lang]
+
+st.title(t["title"])
+st.write(t["subtitle"])
+
+with st.expander(t["rationale_exp"], expanded=False):
+    st.markdown(t["rationale_md"])
 
 # ==============================================================================
 # BARRE LATÉRALE - CONFIGURATION & IMPORTEUR DE FICHIERS
 # ==============================================================================
-st.sidebar.header("📁 Importation des Données")
-fichier_uploade = st.sidebar.file_uploader("Glissez un fichier de données LMT (.txt) ici", type=["txt"])
+st.sidebar.header(t["import_h"])
+fichier_uploade = st.sidebar.file_uploader(t["upload"], type=["txt", "csv"])
 
-# Chargement intelligent (mise en cache pour optimiser les performances de la GUI)
 @st.cache_data
-def charger_donnees(source):
-    return pd.read_csv(source, sep='\t')
+def charger_donnees(fichier):
+    # Logique pour différencier CSV et TXT / Logic to differentiate CSV and TXT
+    if fichier.name.endswith('.csv'):
+        try:
+            # Essayer virgule en premier / Try comma first
+            df_temp = pd.read_csv(fichier, sep=',')
+            # Si le dataframe n'a qu'une colonne, essayer le point-virgule / Try semicolon if only 1 col
+            if len(df_temp.columns) == 1:
+                fichier.seek(0)
+                df_temp = pd.read_csv(fichier, sep=';')
+            return df_temp
+        except Exception:
+            fichier.seek(0)
+            return pd.read_csv(fichier)
+    else:
+        # Fichiers TXT natifs exportés de LMT (tabulation) / Native LMT TXT files (tab)
+        return pd.read_csv(fichier, sep='\t')
 
 df_raw = None
 if fichier_uploade is not None:
     df_raw = charger_donnees(fichier_uploade)
-    st.sidebar.success("Données chargées !")
+    st.sidebar.success(t["load_ok"])
 else:
-    st.sidebar.warning("En attente d'un fichier .txt. Téléversez une manipulation pour démarrer.")
+    st.sidebar.warning(t["wait_file"])
 
-# Exécution de l'interface dès que les données sont disponibles
 if df_raw is not None:
     df = df_raw.copy()
     
-    # Extraction dynamique du Sexe et du Traitement (Ajustable selon la manip)
-    st.sidebar.header("⚙️ Paramètres du Génotype")
-    separateur = st.sidebar.text_input("Séparateur de la colonne 'genotype'", "_")
+    st.sidebar.header(t["param_h"])
+    separateur = st.sidebar.text_input(t["sep"], "_")
     
     try:
         df['Sex'] = df['genotype'].str.split(separateur).str[0]
         df['Treatment'] = df['genotype'].str.split(separateur).str[1]
     except Exception as e:
-        st.sidebar.error(f"Erreur de parsing de la colonne 'genotype': {e}")
+        st.sidebar.error(f"{t['err_parse']}: {e}")
 
-    # Détection automatique des facteurs expérimentaux
     groupes_detectes = sorted(df['Treatment'].dropna().unique().tolist())
     sexes_detectes = sorted(df['Sex'].dropna().unique().tolist())
     phases_detectees = sorted(df['day'].dropna().unique().tolist())
 
-    st.sidebar.subheader("🔬 Sélection des Groupes")
-    groupe_controle = st.sidebar.selectbox("Groupe CONTRÔLE (Référence Z=0)", groupes_detectes, index=groupes_detectes.index('SHAM') if 'SHAM' in groupes_detectes else 0)
-    groupe_cible = st.sidebar.selectbox("Groupe TRAITÉ / MUTANT", [g for g in groupes_detectes if g != groupe_controle], index=0)
+    st.sidebar.subheader(t["group_h"])
+    idx_sham = groupes_detectes.index('SHAM') if 'SHAM' in groupes_detectes else 0
+    groupe_controle = st.sidebar.selectbox(t["ctrl"], groupes_detectes, index=idx_sham)
+    groupe_cible = st.sidebar.selectbox(t["target"], [g for g in groupes_detectes if g != groupe_controle], index=0)
     
     phases_par_defaut = [p for p in ['Exploration', 'Night 1', 'Night 2', 'Night 3'] if p in phases_detectees]
-    phases_ordre = st.sidebar.multiselect("Chronologie des phases (Axe X)", phases_detectees, default=phases_par_defaut)
+    phases_ordre = st.sidebar.multiselect(t["phase"], phases_detectees, default=phases_par_defaut)
 
-    # Paramètres de rendu graphique et Zoom interactif
-    st.sidebar.header("🎨 Personnalisation des Figures")
-    largeur_fig = st.sidebar.slider("Largeur de la figure", 10, 24, 16)
-    hauteur_fig = st.sidebar.slider("Hauteur de la figure", 15, 45, 28)
-    taille_etoiles = st.sidebar.slider("Taille des étoiles / p-values", 12, 30, 18)
-    couleur_cible = st.sidebar.color_picker("Couleur du groupe traité", "#d62728")
+    st.sidebar.header(t["plot_h"])
+    largeur_fig = st.sidebar.slider(t["w"], 10, 24, 16)
+    hauteur_fig = st.sidebar.slider(t["h"], 15, 45, 28)
+    taille_etoiles = st.sidebar.slider(t["star"], 12, 30, 18)
+    couleur_cible = st.sidebar.color_picker(t["color"], "#d62728")
     
-    activer_zoom_y = st.sidebar.checkbox("Activer le zoom manuel de l'axe Y")
+    activer_zoom_y = st.sidebar.checkbox(t["zoom"])
     y_min, y_max = -3.0, 3.0
     if activer_zoom_y:
         col_z1, col_z2 = st.sidebar.columns(2)
@@ -108,9 +200,8 @@ if df_raw is not None:
         y_max = col_z2.number_input("Y Max", value=3.0, step=0.5)
 
     # ==============================================================================
-    # PIPELINE DE TRAITEMENT DES DONNÉES
+    # PIPELINE DE TRAITEMENT
     # ==============================================================================
-    # Reconstruction et vérification des métriques
     df['Center_Periphery_Ratio'] = df['CenterZoneTotalLen'] / (df['PeripheryZoneTotalLen'] + 1e-5)
     
     metriques_domaines = {
@@ -121,7 +212,6 @@ if df_raw is not None:
         'Active_Social_Engagement': ['Oral-oralContactTotalLen', 'Oral-genitalContactTotalLen', 'SocialapproachNb', 'Train2TotalLen', 'FollowZoneTotalLen']
     }
 
-    # Nettoyage des métriques absentes du fichier importé
     for domaine in metriques_domaines:
         metriques_domaines[domaine] = [m for m in metriques_domaines[domaine] if m in df.columns]
 
@@ -129,16 +219,14 @@ if df_raw is not None:
     for m in toutes_metriques:
         df[m] = df[m].fillna(0)
 
-    # Filtrage des lignes
     df_filtered = df[df['Treatment'].isin([groupe_controle, groupe_cible])].copy()
     df_filtered['day'] = pd.Categorical(df_filtered['day'], categories=phases_ordre, ordered=True)
     df_filtered = df_filtered.dropna(subset=['day']).copy()
 
-    # Déclenchement de l'analyse
-    if st.button("🚀 Lancer l'Analyse Computationnelle", type="primary"):
-        with st.spinner("Exécution du pipeline statistique en cours..."):
+    if st.button(t["run"], type="primary"):
+        with st.spinner(t["running"]):
             
-            # 1. Résidualisation LMM
+            # 1. Modèle Mixte Linéaire / Linear Mixed Model
             for m in toutes_metriques:
                 df_filtered[f'{m}_adj'] = df_filtered[m]
                 try:
@@ -152,7 +240,7 @@ if df_raw is not None:
                 except:
                     pass
 
-            # 2. Calcul du Z-Score ancré
+            # 2. Z-Scores
             df_z = df_filtered.copy()
             for m in toutes_metriques:
                 z_col = f"{m}_z"
@@ -162,14 +250,13 @@ if df_raw is not None:
                     moyenne_base = df_z.loc[masque_base, f'{m}_adj'].mean()
                     std_base = df_z.loc[masque_base, f'{m}_adj'].std()
                     
-                    # Correction appliquée ici (or au lieu de ||)
                     if pd.isna(std_base) or std_base == 0: 
                         std_base = 1.0
                         
                     masque_sexe = (df_z['Sex'] == s)
                     df_z.loc[masque_sexe, z_col] = (df_z.loc[masque_sexe, f'{m}_adj'] - moyenne_base) / std_base
 
-            # 3. Agrégation des indices composites
+            # 3. Agrégation / Aggregation
             for domaine, metriques in metriques_domaines.items():
                 colonnes_z = [f"{m}_z" for m in metriques]
                 df_z[f"{domaine}_Index"] = df_z[colonnes_z].mean(axis=1)
@@ -178,9 +265,9 @@ if df_raw is not None:
             df_modele = df_z[['group', 'RFID', 'Sex', 'Treatment', 'day'] + indices_finaux].dropna().copy()
 
             # ==============================================================================
-            # CONSTRUCTIONS ET RENDU DES GRAPHIQUES
+            # GRAPHIQUES / PLOTTING
             # ==============================================================================
-            st.header("📊 Trajectoires Phénotypiques Longitudes")
+            st.header(t["res_h"])
             
             def obtenir_etoiles(p):
                 if p < 0.001: return '***'
@@ -215,13 +302,12 @@ if df_raw is not None:
                     
                     ax.set_title(f"{domaine_cle.replace('_', ' ')} - {etiquettes_sexe.get(s, s)}\n({metriques_formatees})", fontsize=12, pad=12)
                     ax.axhline(0, ls='--', color='black', alpha=0.3)
-                    ax.set_ylabel('Adjusted Z-Score\n(Litter-Corrected)' if idx_sexe == 0 else '')
+                    ax.set_ylabel(t["ylab"] if idx_sexe == 0 else '')
                     ax.set_xlabel('')
                     
                     if ax.get_legend() is not None: 
                         ax.get_legend().remove()
                     
-                    # Extraction des p-values Welch t-test point-par-point
                     for idx_jour, jour in enumerate(phases_ordre):
                         valeurs_ctrl = sous_groupe[(sous_groupe['day'] == jour) & (sous_groupe['Treatment'] == groupe_controle)][nom_indice].dropna()
                         valeurs_cible = sous_groupe[(sous_groupe['day'] == jour) & (sous_groupe['Treatment'] == groupe_cible)][nom_indice].dropna()
@@ -240,35 +326,32 @@ if df_raw is not None:
             plt.tight_layout()
             fig.subplots_adjust(top=0.94, hspace=0.45)
             
-            # Rendu visuel immédiat dans la GUI
             st.pyplot(fig)
             
             # ==============================================================================
-            # ZONE D'EXPORTATION ET TÉLÉCHARGEMENT
+            # EXPORTATION
             # ==============================================================================
-            st.header("💾 Exportation des Résultats")
+            st.header(t["exp_h"])
             col1, col2 = st.columns(2)
             
-            # 1. Sauvegarde de la figure haute définition en mémoire pour téléchargement
             buffer_img = io.BytesIO()
             fig.savefig(buffer_img, format='png', bbox_inches='tight', dpi=300)
             buffer_img.seek(0)
             
             col1.download_button(
-                label="🖼️ Télécharger la Figure (Qualité Publication - DPI 300)",
+                label=t["dl_fig"],
                 data=buffer_img,
                 file_name=f"LMT_Figure_{groupe_controle}_vs_{groupe_cible}.png",
                 mime="image/png"
             )
             
-            # 2. Sauvegarde du fichier de données calculées au format CSV
             buffer_csv = io.StringIO()
             df_modele.to_csv(buffer_csv, index=False)
             
             col2.download_button(
-                label="📊 Télécharger les Données Calculées (Z-Scores & Indices CSV)",
+                label=t["dl_csv"],
                 data=buffer_csv.getvalue(),
                 file_name=f"LMT_Donnees_{groupe_controle}_vs_{groupe_cible}.csv",
                 mime="text/csv"
             )
-            st.success("Analyses prêtes pour exportation !")
+            st.success(t["exp_ok"])
