@@ -33,7 +33,56 @@ text = {
     "Français": {
         "title": "🧠 LMT Phenotype Analytics : Pipeline de Plasticité Comportementale",
         "subtitle": "Interface Graphique d'Analyse des Trajectoires du Live Mouse Tracker (Version Fortifiée).",
-        "rationale_exp": "📖 Afficher le Rationnel Mathématique",
+        "rationale_exp": "📖 Mode d'Emploi & Rationnel Mathématique",
+        "rationale_md": """
+# 🧠 Pipeline LMT : Mode d'Emploi & Justification Mathématique
+
+Cet outil extrait des signatures robustes de plasticité comportementale en satisfaisant aux standards statistiques de haut niveau (*Science*, *Nature*).
+
+---
+
+## 🛠️ PARTIE 1 : Mode d'Emploi (Step-by-Step)
+
+### Étape 1 : Importation et Formatage
+1. **Fichier de données :** Glissez votre fichier brut exporté du LMT (`.txt` ou `.csv`). Le système détectera automatiquement le séparateur.
+2. **Identification du Génotype :** Sélectionnez la colonne contenant vos groupes expérimentaux.
+3. **Séparateur :** Si votre colonne combine Sexe et Traitement (ex: `M_SHAM`), indiquez le séparateur (ex: `_`). 
+
+### Étape 2 : Configuration de la Cohorte Globale (Modèle LMM)
+* **Action :** Dans la section *1️⃣ Cohorte Globale*, sélectionnez **TOUS** les groupes présents dans l'expérience (ex: SHAM, THC, CBD).
+* **Pourquoi ?** Le Modèle Mixte Linéaire (LMM) nécessite l'intégralité de la cohorte pour estimer la variance maternelle (effet de portée) avec une puissance statistique maximale. Exclure un groupe ici fausserait la correction mathématique.
+
+### Étape 3 : Définition des Domaines Comportementaux
+* **Action :** Dans *🧩 Configuration des Domaines*, vérifiez les métriques attribuées. Vous pouvez en ajouter ou retirer à la volée.
+
+### Étape 4 : Visualisation et Exportation
+1. **Comparaison :** Choisissez le groupe de référence 0 (généralement `SHAM` ou `WT`) et le groupe cible.
+2. **Résultats :** Le graphique génère les trajectoires avec les statistiques de Welch point-par-point.
+3. **Export :** Téléchargez la figure (300 DPI) et la matrice de données résidualisées au format CSV.
+
+---
+
+## 🔬 PARTIE 2 : Pipeline Mathématique et Logique Neurobiologique
+
+### 1. Correction de la Pseudo-réplication (Modèle Mixte LMM)
+Pour isoler l'effet de la mutation ou du traitement, nous soustrayons la variance maternelle via un LMM :
+$Y_{ijk} = \\beta_0 + \\beta_1(Treatment_i) + \\gamma_j + \\epsilon_{ijk}$
+Où $\\gamma_j$ est l'intercept aléatoire de la $j$-ème portée. Le comportement résidualisé devient :
+$Y_{adj} = Y_{ijk} - \\gamma_j$
+
+### 2. Standardisation par Z-Score "Baseline-Anchored"
+Le Z-Score est calculé en utilisant **exclusivement** la moyenne et l'écart-type de la première heure d'exploration du groupe Contrôle.
+$Z_{ijk} = \\frac{x_{adj, ijk} - \\mu_{control, base}}{\\sigma_{control, base}}$
+* **$Z=0$** représente l'état d'éveil aigu face à la nouveauté. 
+* Une courbe qui **s'effondre massivement dans le négatif** signe un déficit d'éveil, une apathie ou une sédation profonde altérant l'exploration.
+* Une courbe qui **stagne près de 0** prouve une rigidité comportementale et une incapacité à s'habituer (déficit de plasticité).
+
+### 3. Intégration en Domaines Composites (Filtrage du Bruit)
+Les Z-scores sont moyennés en Domaines Composites. La variance de l'erreur aléatoire diminue proportionnellement à $1/M$, maximisant le ratio signal/bruit.
+
+### 4. Dissection Cinétique Temporelle (Welch's t-tests)
+L'algorithme utilise des tests de Welch point-par-point (sans assumer l'homoscédasticité) pour identifier l'instant temporel exact de la divergence des trajectoires.
+        """,
         "import_h": "📁 Importation des Données",
         "upload": "Glissez un fichier (.txt ou .csv) ici",
         "load_ok": "Données chargées avec succès !",
@@ -67,7 +116,52 @@ text = {
     "English": {
         "title": "🧠 LMT Phenotype Analytics: Behavioral Plasticity Pipeline",
         "subtitle": "Graphical Interface for Live Mouse Tracker Trajectory Analysis (Fortified Version).",
-        "rationale_exp": "📖 Show Mathematical Rationale",
+        "rationale_exp": "📖 Manual & Mathematical Rationale",
+        "rationale_md": """
+# 🧠 LMT Pipeline: Manual & Mathematical Rationale
+
+This tool extracts robust signatures of behavioral plasticity satisfying high-level statistical standards (*Science*, *Nature*).
+
+---
+
+## 🛠️ PART 1: Step-by-Step Manual
+
+### Step 1: Import and Formatting
+1. **Data file:** Drag and drop your raw LMT export (`.txt` or `.csv`).
+2. **Genotype Identification:** Select the column containing your experimental groups.
+3. **Separator:** If the column combines Sex and Treatment (e.g., `M_SHAM`), indicate the separator (e.g., `_`).
+
+### Step 2: Global Cohort Configuration (LMM Model)
+* **Action:** In section *1️⃣ Global Cohort*, select **ALL** groups present in the experiment (e.g., SHAM, THC, CBD).
+* **Why?** The Linear Mixed Model (LMM) requires the entire cohort to estimate maternal variance (litter effect) with maximum statistical power.
+
+### Step 3: Behavioral Domains Definition
+* **Action:** In *🧩 Domain Configuration*, check the metrics. You can add or remove them on the fly.
+
+### Step 4: Visualization and Export
+1. **Comparison:** Choose the reference 0 group (usually `SHAM` or `WT`) and the target group.
+2. **Results:** Generate trajectories with point-by-point Welch statistics.
+3. **Export:** Download the high-res figure (300 DPI) and the residualized data matrix as CSV.
+
+---
+
+## 🔬 PART 2: Mathematical Pipeline & Neurobiological Logic
+
+### 1. Pseudo-replication Correction (LMM)
+To isolate the treatment effect, we subtract maternal variance via an LMM:
+$Y_{ijk} = \\beta_0 + \\beta_1(Treatment_i) + \\gamma_j + \\epsilon_{ijk}$
+Residualized behavior becomes: $Y_{adj} = Y_{ijk} - \\gamma_j$
+
+### 2. Baseline-Anchored Z-Score Standardization
+The Z-Score uses **exclusively** the mean and standard deviation of the Control group's first hour of exploration.
+$Z_{ijk} = \\frac{x_{adj, ijk} - \\mu_{control, base}}{\\sigma_{control, base}}$
+* **$Z=0$** represents acute arousal to novelty.
+* A massive drop into the negative indicates profound sedation or apathy.
+* A curve stagnating near 0 proves behavioral rigidity (plasticity deficit).
+
+### 3. Composite Domains & Kinetic Dissection
+Z-scores are averaged to maximize the signal-to-noise ratio. Welch's t-tests (which do not assume homoscedasticity) identify the exact temporal point of divergence.
+        """,
         "import_h": "📁 Data Import",
         "upload": "Drop a data file (.txt or .csv) here",
         "load_ok": "Data successfully loaded!",
@@ -104,6 +198,9 @@ t = text[lang]
 
 st.title(t["title"])
 st.write(t["subtitle"])
+
+with st.expander(t["rationale_exp"], expanded=False):
+    st.markdown(t["rationale_md"])
 
 st.sidebar.header(t["import_h"])
 fichier_uploade = st.sidebar.file_uploader(t["upload"], type=["txt", "csv"])
@@ -225,7 +322,7 @@ if df_raw is not None:
             df_calcul['group'] = df_calcul['group'].astype(str)
             df_calcul['RFID'] = df_calcul['RFID'].astype(str)
 
-            # Exécution rigoureuse du LMM avec C(Treatment) pour forcer le modèle catégoriel
+            # Exécution rigoureuse du LMM avec C(Treatment)
             for m in toutes_metriques:
                 df_calcul[f'{m}_adj'] = df_calcul[m]
                 try:
