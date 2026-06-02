@@ -32,7 +32,7 @@ lang = st.sidebar.radio("🌐 Language / Langue", ["Français", "English"])
 text = {
     "Français": {
         "title": "🧠 LMT Phenotype Analytics : Pipeline de Plasticité Comportementale",
-        "subtitle": "Interface Graphique d'Analyse des Trajectoires du Live Mouse Tracker.",
+        "subtitle": "Interface Graphique d'Analyse des Trajectoires du Live Mouse Tracker (Version Fortifiée).",
         "rationale_exp": "📖 Afficher le Rationnel Mathématique",
         "import_h": "📁 Importation des Données",
         "upload": "Glissez un fichier (.txt ou .csv) ici",
@@ -43,7 +43,7 @@ text = {
         "sep": "Séparateur de la colonne (ex: '_' pour M_THC)",
         "err_parse": "Erreur de séparation. Vérifiez le séparateur.",
         "cohort_h": "1️⃣ Cohorte Globale (LMM)",
-        "cohort_help": "Sélectionnez tous les groupes à inclure dans le calcul de variance.",
+        "cohort_help": "Sélectionnez tous les groupes à inclure dans le calcul de la variance maternelle.",
         "domain_config_h": "🧩 Configuration des Domaines",
         "group_h": "2️⃣ Comparaison (Graphique)",
         "ctrl": "Groupe CONTRÔLE (Référence Z=0)",
@@ -55,9 +55,9 @@ text = {
         "star": "Taille étoiles",
         "color": "Couleur cible",
         "zoom": "Zoom Axe Y",
-        "run": "🚀 Lancer l'Analyse Computationnelle",
-        "running": "Exécution du pipeline statistique en cours...",
-        "res_h": "📊 Trajectoires Phénotypiques",
+        "run": "🚀 Lancer l'Analyse Computationnelle Rigoureuse",
+        "running": "Calcul des résidus LMM et Z-scores en cours...",
+        "res_h": "📊 Trajectoires Phénotypiques (Litter-Corrected)",
         "ylab": "Adjusted Z-Score\n(Litter-Corrected)",
         "exp_h": "💾 Exportation",
         "dl_fig": "🖼️ Télécharger la Figure",
@@ -66,7 +66,7 @@ text = {
     },
     "English": {
         "title": "🧠 LMT Phenotype Analytics: Behavioral Plasticity Pipeline",
-        "subtitle": "Graphical Interface for Live Mouse Tracker Trajectory Analysis.",
+        "subtitle": "Graphical Interface for Live Mouse Tracker Trajectory Analysis (Fortified Version).",
         "rationale_exp": "📖 Show Mathematical Rationale",
         "import_h": "📁 Data Import",
         "upload": "Drop a data file (.txt or .csv) here",
@@ -77,7 +77,7 @@ text = {
         "sep": "Column separator (e.g., '_' for M_THC)",
         "err_parse": "Parsing error. Check the separator.",
         "cohort_h": "1️⃣ Global Cohort (LMM)",
-        "cohort_help": "Select all groups to include in variance calculation.",
+        "cohort_help": "Select all groups to include in maternal variance calculation.",
         "domain_config_h": "🧩 Domain Configuration",
         "group_h": "2️⃣ Comparison (Plot)",
         "ctrl": "CONTROL Group (Reference Z=0)",
@@ -89,9 +89,9 @@ text = {
         "star": "Star size",
         "color": "Target color",
         "zoom": "Y-Axis Zoom",
-        "run": "🚀 Run Computational Analysis",
-        "running": "Executing statistical pipeline...",
-        "res_h": "📊 Phenotypic Trajectories",
+        "run": "🚀 Run Rigorous Computational Analysis",
+        "running": "Computing LMM residuals and Z-scores...",
+        "res_h": "📊 Phenotypic Trajectories (Litter-Corrected)",
         "ylab": "Adjusted Z-Score\n(Litter-Corrected)",
         "exp_h": "💾 Export",
         "dl_fig": "🖼️ Download Figure",
@@ -105,9 +105,6 @@ t = text[lang]
 st.title(t["title"])
 st.write(t["subtitle"])
 
-# ==============================================================================
-# IMPORTATION ROBUSTE
-# ==============================================================================
 st.sidebar.header(t["import_h"])
 fichier_uploade = st.sidebar.file_uploader(t["upload"], type=["txt", "csv"])
 
@@ -115,16 +112,14 @@ fichier_uploade = st.sidebar.file_uploader(t["upload"], type=["txt", "csv"])
 def charger_donnees(fichier):
     content = fichier.read()
     separateurs_a_tester = ['\t', ',', ';']
-    
     for sep in separateurs_a_tester:
         try:
             df = pd.read_csv(io.BytesIO(content), sep=sep)
             if len(df.columns) > 3:
-                df.columns = df.columns.str.strip() 
+                df.columns = df.columns.str.strip()
                 return df
         except:
             continue
-            
     try:
         df = pd.read_csv(io.BytesIO(content))
         df.columns = df.columns.str.strip()
@@ -142,7 +137,6 @@ else:
 
 if df_raw is not None:
     df = df_raw.copy()
-    
     st.sidebar.header(t["param_h"])
     
     colonnes_dispos = list(df.columns)
@@ -170,24 +164,18 @@ if df_raw is not None:
     sexes_detectes = sorted(df['Sex'].dropna().unique().tolist())
     phases_detectees = sorted(df['day'].dropna().unique().tolist())
 
-    # COHORTE GLOBALE
     st.sidebar.subheader(t["cohort_h"])
     st.sidebar.caption(t["cohort_help"])
     defaut_cohort = ['SHAM', 'THC', 'CBD'] if all(g in groupes_detectes for g in ['SHAM', 'THC', 'CBD']) else groupes_detectes
-    groupes_inclusion = st.sidebar.multiselect("Groupes inclus dans le LMM:", groupes_detectes, default=defaut_cohort)
+    groupes_inclusion = st.sidebar.multiselect("Groupes LMM:", groupes_detectes, default=defaut_cohort)
 
     if not groupes_inclusion:
         st.sidebar.warning("Veuillez sélectionner au moins un groupe.")
         st.stop()
         
-    # ==============================================================================
-    # SÉLECTION DYNAMIQUE DES MÉTRIQUES (NOUVEAU MODULE)
-    # ==============================================================================
-    # Calcul en amont du ratio spatial pour l'inclure dans les options disponibles
     if 'CenterZoneTotalLen' in df.columns and 'PeripheryZoneTotalLen' in df.columns:
         df['Center_Periphery_Ratio'] = df['CenterZoneTotalLen'] / (df['PeripheryZoneTotalLen'] + 1e-5)
     
-    # Exclusion des métadonnées pour ne proposer que des vraies métriques comportementales
     colonnes_exclues = ['RFID', 'group', 'day', 'Sex', 'Treatment', 'genotype']
     colonnes_possibles = [c for c in df.columns if c not in colonnes_exclues and pd.api.types.is_numeric_dtype(df[c])]
     
@@ -200,21 +188,13 @@ if df_raw is not None:
     }
     
     metriques_domaines = {}
-    
     with st.sidebar.expander(t["domain_config_h"], expanded=False):
         for domaine, defauts in defauts_domaines_architectures.items():
-            # Filtre de sécurité : ne sélectionner par défaut que les colonnes réellement existantes dans ce fichier
             defauts_presents = [m for m in defauts if m in colonnes_possibles]
-            selection = st.multiselect(
-                f"{domaine.replace('_', ' ')}",
-                options=colonnes_possibles,
-                default=defauts_presents
-            )
-            # Ne conserver le domaine que s'il contient au moins une métrique sélectionnée
+            selection = st.multiselect(f"{domaine.replace('_', ' ')}", options=colonnes_possibles, default=defauts_presents)
             if selection:
                 metriques_domaines[domaine] = selection
 
-    # COMPARAISON
     st.sidebar.subheader(t["group_h"])
     idx_sham = groupes_inclusion.index('SHAM') if 'SHAM' in groupes_inclusion else 0
     groupe_controle = st.sidebar.selectbox(t["ctrl"], groupes_inclusion, index=idx_sham)
@@ -229,18 +209,14 @@ if df_raw is not None:
     taille_etoiles = st.sidebar.slider(t["star"], 12, 30, 18)
     couleur_cible = st.sidebar.color_picker(t["color"], "#2ca02c" if groupe_cible == 'CBD' else "#d62728")
 
-    # ==============================================================================
-    # PIPELINE DE TRAITEMENT
-    # ==============================================================================
     toutes_metriques = [m for sous_liste in metriques_domaines.values() for m in sous_liste]
 
     if st.button(t["run"], type="primary"):
         if not metriques_domaines:
-            st.error("Aucune métrique sélectionnée. Veuillez configurer les domaines.")
+            st.error("Configurez au moins un domaine.")
             st.stop()
             
         with st.spinner(t["running"]):
-            
             df_calcul = df[df['Treatment'].isin(groupes_inclusion)].copy()
             for m in toutes_metriques:
                 df_calcul[m] = df_calcul[m].fillna(0)
@@ -249,10 +225,11 @@ if df_raw is not None:
             df_calcul['group'] = df_calcul['group'].astype(str)
             df_calcul['RFID'] = df_calcul['RFID'].astype(str)
 
+            # Exécution rigoureuse du LMM avec C(Treatment) pour forcer le modèle catégoriel
             for m in toutes_metriques:
                 df_calcul[f'{m}_adj'] = df_calcul[m]
                 try:
-                    modele = smf.mixedlm(f"Q('{m}') ~ Treatment", df_calcul, groups=df_calcul["group"])
+                    modele = smf.mixedlm(f"Q('{m}') ~ C(Treatment)", df_calcul, groups=df_calcul["group"])
                     resultat = modele.fit(method='cg')
                     effets_aleatoires = resultat.random_effects
                     df_calcul[f'{m}_adj'] = df_calcul.apply(
@@ -270,10 +247,7 @@ if df_raw is not None:
                     masque_base = (df_z['day'] == phases_ordre[0]) & (df_z['Sex'] == s) & (df_z['Treatment'] == groupe_controle)
                     moyenne_base = df_z.loc[masque_base, f'{m}_adj'].mean()
                     std_base = df_z.loc[masque_base, f'{m}_adj'].std()
-                    
-                    if pd.isna(std_base) or std_base == 0: 
-                        std_base = 1.0
-                        
+                    if pd.isna(std_base) or std_base == 0: std_base = 1.0
                     masque_sexe = (df_z['Sex'] == s)
                     df_z.loc[masque_sexe, z_col] = (df_z.loc[masque_sexe, f'{m}_adj'] - moyenne_base) / std_base
 
@@ -284,9 +258,6 @@ if df_raw is not None:
             indices_finaux = [f"{d}_Index" for d in metriques_domaines.keys()]
             df_modele = df_z[['group', 'RFID', 'Sex', 'Treatment', 'day'] + indices_finaux].dropna().copy()
 
-            # ==============================================================================
-            # GRAPHIQUES ET TESTS
-            # ==============================================================================
             st.header(t["res_h"])
             
             def obtenir_etoiles(p):
@@ -297,10 +268,7 @@ if df_raw is not None:
 
             sns.set_theme(style="whitegrid", context="talk")
             fig, axes = plt.subplots(len(metriques_domaines), 2, figsize=(largeur_fig, 5 * len(metriques_domaines)), sharex=True)
-            
-            # Gestion du cas où on aurait un seul domaine sélectionné (axes devient 1D)
-            if len(metriques_domaines) == 1:
-                axes = np.array([axes])
+            if len(metriques_domaines) == 1: axes = np.array([axes])
                 
             palette = {groupe_controle: '#7f7f7f', groupe_cible: couleur_cible}
             etiquettes_sexe = {'M': 'Males', 'F': 'Females'}
@@ -325,9 +293,7 @@ if df_raw is not None:
                     ax.axhline(0, ls='--', color='black', alpha=0.3)
                     ax.set_ylabel(t["ylab"] if idx_sexe == 0 else '')
                     ax.set_xlabel('')
-                    
-                    if ax.get_legend() is not None: 
-                        ax.get_legend().remove()
+                    if ax.get_legend() is not None: ax.get_legend().remove()
                     
                     for idx_jour, jour in enumerate(phases_ordre):
                         valeurs_ctrl = sous_groupe[(sous_groupe['day'] == jour) & (sous_groupe['Treatment'] == groupe_controle)][nom_indice].dropna()
@@ -346,29 +312,15 @@ if df_raw is not None:
             fig.legend(handles, labels, title="Treatment", loc='upper center', bbox_to_anchor=(0.5, 1.01), ncol=2)
             plt.tight_layout()
             fig.subplots_adjust(top=0.94, hspace=0.45)
-            
             st.pyplot(fig)
             
             st.header(t["exp_h"])
             col1, col2 = st.columns(2)
-            
             buffer_img = io.BytesIO()
             fig.savefig(buffer_img, format='png', bbox_inches='tight', dpi=300)
             buffer_img.seek(0)
             
-            col1.download_button(
-                label=t["dl_fig"],
-                data=buffer_img,
-                file_name=f"LMT_Figure_{groupe_controle}_vs_{groupe_cible}.png",
-                mime="image/png"
-            )
-            
+            col1.download_button(label=t["dl_fig"], data=buffer_img, file_name=f"LMT_Figure_Rigorous.png", mime="image/png")
             buffer_csv = io.StringIO()
             df_plot.to_csv(buffer_csv, index=False)
-            
-            col2.download_button(
-                label=t["dl_csv"],
-                data=buffer_csv.getvalue(),
-                file_name=f"LMT_Donnees_{groupe_controle}_vs_{groupe_cible}.csv",
-                mime="text/csv"
-            )
+            col2.download_button(label=t["dl_csv"], data=buffer_csv.getvalue(), file_name=f"LMT_Data_Rigorous.csv", mime="text/csv")
