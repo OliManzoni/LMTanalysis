@@ -40,7 +40,7 @@ text = {
         "rationale_exp": "📖 Afficher le Rationnel Mathématique & l'Architecture des Domaines",
         "rationale_md": """
 ### 1. Logique Mathématique et Statistique
-* **Résidualisation Hiérarchique (LMM) :** Corrige le biais de pseudo-réplication (variance maternelle).
+* **Résidualisation Hiérarchique Globale (LMM) :** Calcule la variance maternelle sur *l'ensemble* de la cohorte expérimentale pour maximiser la puissance statistique avant isolation des groupes.
 * **Z-Score Ancré sur la Nouveauté :** Normalisation calée sur le groupe témoin ($Z=0$).
 * **Tests de Welch Point-par-Point :** Gère l'hétéroscédasticité sans assumer l'égalité des variances.
 
@@ -58,7 +58,7 @@ text = {
         "param_h": "⚙️ Paramètres du Génotype",
         "sep": "Séparateur de la colonne 'genotype'",
         "err_parse": "Erreur de parsing de la colonne 'genotype'",
-        "group_h": "🔬 Sélection des Groupes",
+        "group_h": "🔬 Sélection des Groupes pour Visualisation",
         "ctrl": "Groupe CONTRÔLE (Référence Z=0)",
         "target": "Groupe TRAITÉ / MUTANT",
         "phase": "Chronologie des phases (Axe X)",
@@ -68,8 +68,8 @@ text = {
         "star": "Taille des étoiles / p-values",
         "color": "Couleur du groupe traité",
         "zoom": "Activer le zoom manuel de l'axe Y",
-        "run": "🚀 Lancer l'Analyse Computationnelle",
-        "running": "Exécution du pipeline statistique en cours...",
+        "run": "🚀 Lancer l'Analyse Computationnelle Globale",
+        "running": "Exécution du pipeline statistique LMM global en cours...",
         "res_h": "📊 Trajectoires Phénotypiques Longitudinales",
         "ylab": "Adjusted Z-Score\n(Litter-Corrected)",
         "exp_h": "💾 Exportation des Résultats",
@@ -83,7 +83,7 @@ text = {
         "rationale_exp": "📖 Show Mathematical Rationale & Domain Architecture",
         "rationale_md": """
 ### 1. Mathematical and Statistical Logic
-* **Hierarchical Residualization (LMM):** Corrects pseudo-replication bias (maternal variance).
+* **Global Hierarchical Residualization (LMM):** Computes maternal variance across the *entire* experimental cohort to maximize statistical power prior to group isolation.
 * **Novelty-Anchored Z-Score:** Normalization anchored to the control group ($Z=0$).
 * **Point-by-Point Welch's Tests:** Handles heteroscedasticity without assuming equal variances.
 
@@ -101,7 +101,7 @@ text = {
         "param_h": "⚙️ Genotype Parameters",
         "sep": "Separator for 'genotype' column",
         "err_parse": "Error parsing 'genotype' column",
-        "group_h": "🔬 Group Selection",
+        "group_h": "🔬 Group Selection for Visualization",
         "ctrl": "CONTROL Group (Reference Z=0)",
         "target": "TREATED / MUTANT Group",
         "phase": "Chronology of phases (X-Axis)",
@@ -111,8 +111,8 @@ text = {
         "star": "Star / p-values size",
         "color": "Treated group color",
         "zoom": "Enable manual Y-axis zoom",
-        "run": "🚀 Run Computational Analysis",
-        "running": "Executing statistical pipeline...",
+        "run": "🚀 Run Global Computational Analysis",
+        "running": "Executing global LMM statistical pipeline...",
         "res_h": "📊 Longitudinal Phenotypic Trajectories",
         "ylab": "Adjusted Z-Score\n(Litter-Corrected)",
         "exp_h": "💾 Export Results",
@@ -138,29 +138,18 @@ fichier_uploade = st.sidebar.file_uploader(t["upload"], type=["txt", "csv"])
 
 @st.cache_data
 def charger_donnees(fichier):
-    # Lecture du contenu brut
     content = fichier.read()
-    
-    # Stratégie intelligente de détection du séparateur
     try:
-        # Essayer d'abord la tabulation (format standard LMT)
         df_temp = pd.read_csv(io.BytesIO(content), sep='\t')
         if 'genotype' in df_temp.columns and len(df_temp.columns) > 5:
             return df_temp
-            
-        # Si ça échoue, essayer la virgule
         df_temp = pd.read_csv(io.BytesIO(content), sep=',')
         if 'genotype' in df_temp.columns and len(df_temp.columns) > 5:
             return df_temp
-            
-        # Si ça échoue, essayer le point-virgule (format français Excel)
         df_temp = pd.read_csv(io.BytesIO(content), sep=';')
         if 'genotype' in df_temp.columns and len(df_temp.columns) > 5:
             return df_temp
-            
-        # Fallback générique
         return pd.read_csv(io.BytesIO(content))
-        
     except Exception as e:
         st.error(f"Erreur de lecture du fichier : {e}")
         return None
@@ -184,7 +173,7 @@ if df_raw is not None:
             df['Sex'] = df['genotype'].str.split(separateur).str[0]
             df['Treatment'] = df['genotype'].str.split(separateur).str[1]
         else:
-            st.sidebar.error("La colonne 'genotype' est introuvable. Veuillez vérifier votre fichier de données.")
+            st.sidebar.error("La colonne 'genotype' est introuvable.")
             st.stop()
     except Exception as e:
         st.sidebar.error(f"{t['err_parse']}: {e}")
@@ -216,7 +205,7 @@ if df_raw is not None:
         y_max = col_z2.number_input("Y Max", value=3.0, step=0.5)
 
     # ==============================================================================
-    # PIPELINE DE TRAITEMENT
+    # PIPELINE DE TRAITEMENT (MODÈLE GLOBAL)
     # ==============================================================================
     df['Center_Periphery_Ratio'] = df['CenterZoneTotalLen'] / (df['PeripheryZoneTotalLen'] + 1e-5)
     
@@ -232,32 +221,32 @@ if df_raw is not None:
         metriques_domaines[domaine] = [m for m in metriques_domaines[domaine] if m in df.columns]
 
     toutes_metriques = [m for sous_liste in metriques_domaines.values() for m in sous_liste]
+    
+    # Nettoyage global avant LMM
+    df_calcul = df.dropna(subset=['day']).copy()
     for m in toutes_metriques:
-        df[m] = df[m].fillna(0)
-
-    df_filtered = df[df['Treatment'].isin([groupe_controle, groupe_cible])].copy()
-    df_filtered['day'] = pd.Categorical(df_filtered['day'], categories=phases_ordre, ordered=True)
-    df_filtered = df_filtered.dropna(subset=['day']).copy()
+        df_calcul[m] = df_calcul[m].fillna(0)
+    df_calcul['day'] = pd.Categorical(df_calcul['day'], categories=phases_ordre, ordered=True)
 
     if st.button(t["run"], type="primary"):
         with st.spinner(t["running"]):
             
-            # 1. Modèle Mixte Linéaire / Linear Mixed Model
+            # 1. Modèle Mixte Linéaire (LMM) sur la totalité des données
             for m in toutes_metriques:
-                df_filtered[f'{m}_adj'] = df_filtered[m]
+                df_calcul[f'{m}_adj'] = df_calcul[m]
                 try:
-                    modele = smf.mixedlm(f"Q('{m}') ~ Treatment", df_filtered, groups=df_filtered["group"])
+                    modele = smf.mixedlm(f"Q('{m}') ~ Treatment", df_calcul, groups=df_calcul["group"])
                     resultat = modele.fit(method='cg')
                     effets_aleatoires = resultat.random_effects
-                    df_filtered[f'{m}_adj'] = df_filtered.apply(
+                    df_calcul[f'{m}_adj'] = df_calcul.apply(
                         lambda ligne: ligne[m] - (effets_aleatoires[ligne['group']]['Group'] if ligne['group'] in effets_aleatoires else 0), 
                         axis=1
                     )
                 except:
                     pass
 
-            # 2. Z-Scores
-            df_z = df_filtered.copy()
+            # 2. Z-Scores basés sur la ligne de base globale
+            df_z = df_calcul.copy()
             for m in toutes_metriques:
                 z_col = f"{m}_z"
                 df_z[z_col] = np.nan
@@ -272,7 +261,7 @@ if df_raw is not None:
                     masque_sexe = (df_z['Sex'] == s)
                     df_z.loc[masque_sexe, z_col] = (df_z.loc[masque_sexe, f'{m}_adj'] - moyenne_base) / std_base
 
-            # 3. Agrégation / Aggregation
+            # 3. Agrégation Globale
             for domaine, metriques in metriques_domaines.items():
                 colonnes_z = [f"{m}_z" for m in metriques]
                 df_z[f"{domaine}_Index"] = df_z[colonnes_z].mean(axis=1)
@@ -281,7 +270,7 @@ if df_raw is not None:
             df_modele = df_z[['group', 'RFID', 'Sex', 'Treatment', 'day'] + indices_finaux].dropna().copy()
 
             # ==============================================================================
-            # GRAPHIQUES / PLOTTING
+            # FILTRAGE FINAL POUR VISUALISATION (SHAM vs CIBLE)
             # ==============================================================================
             st.header(t["res_h"])
             
@@ -297,7 +286,8 @@ if df_raw is not None:
             palette = {groupe_controle: '#7f7f7f', groupe_cible: couleur_cible}
             etiquettes_sexe = {'M': 'Males', 'F': 'Females'}
             
-            df_plot = df_modele.copy()
+            # Isolement strict pour la représentation graphique et les tests de Welch
+            df_plot = df_modele[df_modele['Treatment'].isin([groupe_controle, groupe_cible])].copy()
             df_plot['Treatment'] = pd.Categorical(df_plot['Treatment'], categories=[groupe_controle, groupe_cible], ordered=True)
             
             for idx_domaine, nom_indice in enumerate(indices_finaux):
@@ -362,7 +352,7 @@ if df_raw is not None:
             )
             
             buffer_csv = io.StringIO()
-            df_modele.to_csv(buffer_csv, index=False)
+            df_plot.to_csv(buffer_csv, index=False)
             
             col2.download_button(
                 label=t["dl_csv"],
